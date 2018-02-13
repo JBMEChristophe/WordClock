@@ -110,17 +110,20 @@ void handle_hours(struct tm* t, Adafruit_NeoPixel* strip, byte grid[ROWS][COLUMN
 {
   int minutes = t->tm_min - (t->tm_min % 5); //floor to nearest 5
   int hours   = t->tm_hour;
-  if(minutes > 15) {
-    hours += 1;
+
+  if (hours == 0) {
+    hours = 12;
   }
 
-  if(hours > 12) {
-      hours -= 12;
+  if (minutes > 15 )
+  {
+     hours++;
   }
 
-  if(hours - 1 < 0) { hours = 12; }
-  Serial.print("hours ");
-  Serial.println(hours);
+  if (hours > 12){
+    hours -= 12;
+  }
+
   SWC(NUMBERS[hours -1], color);
 }
 
