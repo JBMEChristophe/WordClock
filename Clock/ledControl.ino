@@ -5,25 +5,25 @@
   #include <avr/power.h>
 #endif
 
-#define SW(w) setWord(strip, neopixel_grid, w, strip->Color(255,0,0,0));
-#define SWC(w, c) setWord(strip, neopixel_grid, w, c);
+#define SW(w) setWord(clock, w, strip->Color(255,0,0,0));
+#define SWC(w, c) setWord(clock, w, c);
 
 //TESTING FOR INITIALISATION
-void self_test(Adafruit_NeoPixel* strip, byte grid[ROWS][COLUMNS], int rows, int columns, uint32_t color, int d) {
+void self_test(wordClock* clock, int rows, int columns, uint32_t color, int ms) {
   for(int x = 0; x < rows; x++) {
     for(int y = 0; y < columns; y++) {
-      strip->setPixelColor(grid[x][y], color);
-      strip->show();
+      clock->strip->setPixelColor(clock->grid[x][y], color);
+      clock->strip->show();
     }
-    delay(d);
+    delay(ms);
     for(int y = 0; y < columns; y++) {
-      strip->setPixelColor(grid[x][y], 0x00000000);
-      strip->show();
+      clock->strip->setPixelColor(clock->grid[x][y], 0x00000000);
+      clock->strip->show();
     }
   }
 }
 
-void setPixelRange(Adafruit_NeoPixel* strip, byte grid[ROWS][COLUMNS], int x, int y, byte pixels, uint32_t color)
+void setPixelRange(wordClock* clock, int x, int y, byte pixels, uint32_t color)
 {
 	Serial.print("pixels: ");
 	Serial.println(pixels, BIN);
@@ -35,18 +35,18 @@ void setPixelRange(Adafruit_NeoPixel* strip, byte grid[ROWS][COLUMNS], int x, in
 			Serial.println(pixels & (1 << i));
 			//this is working
 			// strip->setPixelColor(grid[y][x+i], color);
-			strip->setPixelColor(grid[y][x-i], color);
+			clock->strip->setPixelColor(clock->grid[y][x-i], color);
 		}
 		else {
 			//turn the other LEDs, in the range, off
-			strip->setPixelColor(grid[y][x-i], 0x00000000);
+			clock->strip->setPixelColor(clock->grid[y][x-i], 0x00000000);
 		}
 	}
 }
 
 //sets a word defined in words.h
-void setWord(Adafruit_NeoPixel* strip, byte grid[ROWS][COLUMNS], clockFace w, uint32_t color) {
+void setWord(wordClock* clock, clockFace w, uint32_t color) {
   for(int i = 0; i < w.len; i++) {
-    strip->setPixelColor(grid[w.x][w.y+i], color);
+    clock->strip->setPixelColor(clock->grid[w.x][w.y+i], color);
   }
 }

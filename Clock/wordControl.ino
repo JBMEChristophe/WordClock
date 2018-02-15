@@ -5,7 +5,7 @@
   #include <avr/power.h>
 #endif
 
-void handle_minutes(struct tm* t, Adafruit_NeoPixel* strip, byte grid[ROWS][COLUMNS], uint32_t color) {
+void handle_minutes(struct tm* t, wordClock* clock, uint32_t color) {
     int minutes = t->tm_min - (t->tm_min % 5); //floor to nearest 5
 
     switch(minutes) {
@@ -62,26 +62,26 @@ void handle_minutes(struct tm* t, Adafruit_NeoPixel* strip, byte grid[ROWS][COLU
     }
 }
 
-void handle_minutes_spare(struct tm* t, Adafruit_NeoPixel* strip, byte grid[ROWS][COLUMNS], uint32_t color)
+void handle_minutes_spare(struct tm* t, wordClock* clock, uint32_t color)
 {
   int mod_min = t->tm_min % 5;
 
   switch (mod_min) {
   case 4:
-    strip->setPixelColor(grid[5][5], color);
+    clock->strip->setPixelColor(clock->grid[5][5], color);
   case 3:
-    strip->setPixelColor(grid[5][4], color);
+    clock->strip->setPixelColor(clock->grid[5][4], color);
   case 2:
-    strip->setPixelColor(grid[4][5], color);
+    clock->strip->setPixelColor(clock->grid[4][5], color);
   case 1:
-    strip->setPixelColor(grid[4][4], color);
+    clock->strip->setPixelColor(clock->grid[4][4], color);
     break;
   default:
     break;
   }
 }
 
-void handle_hours(struct tm* t, Adafruit_NeoPixel* strip, byte grid[ROWS][COLUMNS], uint32_t color)
+void handle_hours(struct tm* t, wordClock* clock, uint32_t color)
 {
   int minutes = t->tm_min - (t->tm_min % 5); //floor to nearest 5
   int hours   = t->tm_hour;
@@ -89,24 +89,21 @@ void handle_hours(struct tm* t, Adafruit_NeoPixel* strip, byte grid[ROWS][COLUMN
   if (hours == 0) {
     hours = 12;
   }
-
-  if (minutes > 15 )
-  
-{     hours++;
+  if (minutes > 15 ) {
+       hours++;
   }
-
-  if (hours > 12){
+  if (hours > 12) {
     hours -= 12;
   }
 
   SWC(NUMBERS[hours -1], color);
 }
 
-void displayTime(struct tm* t, Adafruit_NeoPixel* strip, byte grid[ROWS][COLUMNS], uint32_t color)
+void displayTime(struct tm* t, wordClock* clock, uint32_t color)
 {
   SWC(w_IT, color);
   SWC(w_IS, color);
-  handle_minutes(t, strip, grid, color);
-  handle_minutes_spare(t, strip, grid, strip->Color(0,0,255,0));
-  handle_hours(t, strip, grid, color);
+  handle_minutes(t, clock, color);
+  handle_minutes_spare(t, clock, clock->strip->Color(0,0,255,0));
+  handle_hours(t, clock, color);
 }

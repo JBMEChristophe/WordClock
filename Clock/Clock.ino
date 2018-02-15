@@ -22,7 +22,7 @@ byte neopixel_grid[ROWS][COLUMNS] = {
 };
 
 wordClock wclock;
-struct tm t;
+struct tm t;  
 
 void setup() {
   strip = Adafruit_NeoPixel(NUM_LEDS, PIN, NEO_GRBW + NEO_KHZ800);
@@ -31,21 +31,18 @@ void setup() {
   strip.begin();
   strip.show(); // Initialize all pixels to 'off'
   Serial.begin(9600);
-
-  //perform a self to check whether all the LEDS are working.
-  self_test(&strip, neopixel_grid, ROWS, COLUMNS, 0xFFFFFFFF, 50); 
   
   wclock.rows = ROWS;
   wclock.columns = COLUMNS;
   wclock.strip = &strip;
-  for (int i = 0; i < ROWS; ++i)
-  {
-    memcpy(wclock.grid[i], neopixel_grid[i], COLUMNS * sizeof(neopixel_grid[0][0]));
-  }
+  wclock.grid = *neopixel_grid;
 
   t.tm_sec = 0;
   t.tm_min = 50;
   t.tm_hour = 11;
+
+  //perform a self to check whether all the LEDS are working.
+  self_test(&wclock, ROWS, COLUMNS, 0xFFFFFFFF, 50); 
 }
 
 void loop() {
@@ -53,7 +50,8 @@ void loop() {
 
     float temperature = 73.0;
 
-    displayTemperature(&strip, neopixel_grid, temperature, strip.Color(128,0,128,0));
+    //displayTemperature(&wclock, temperature, strip.Color(128,0,128,0));
+    //displayTemperature(&strip, neopixel_grid, temperature, strip.Color(128,0,128,0));
     //displayTime(&t, &strip, neopixel_grid, 0x00FF0000);
 
     strip.show();

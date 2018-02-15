@@ -19,14 +19,13 @@ uint8_t* cutTemp(float temperature) {
 	return t;
 }
 
-
-void showNumber(Adafruit_NeoPixel* strip, byte grid[ROWS][COLUMNS], uint8_t number, uint8_t wordHeight, int8_t offset, uint32_t color) {
+void showNumber(wordClock* clock, uint8_t numberToDisplay, uint8_t wordHeight, uint8_t xOffset, uint32_t color) {
 	for (uint8_t i = 0; i < wordHeight; ++i) {
-		setPixelRange(strip, grid, offset, wordHeight-i, IMAGES[number][i], color);
+		setPixelRange(clock, xOffset, wordHeight-i, IMAGES[numberToDisplay][i], color);
 	}
 }
 
-void displayTemperature(Adafruit_NeoPixel* strip, byte grid[ROWS][COLUMNS], float temperature, uint32_t color) {
+void displayTemperature(wordClock* clock, float temperature, uint32_t color) {
 	uint8_t* temp = cutTemp(temperature);
 	//draw a minus symbol above the numbers
 	if(temperature < 0)	{
@@ -34,7 +33,7 @@ void displayTemperature(Adafruit_NeoPixel* strip, byte grid[ROWS][COLUMNS], floa
 	}
 
 	if (temp[0] != 0) {
-	 	showNumber(strip, grid, temp[0], 8, -4, color);
+	 	showNumber(clock, temp[0], 8, -4, color);
 	}
-	showNumber (strip, grid, temp[1], 8, 2, color);
+	showNumber (clock, temp[1], 8, 2, color);
 }
