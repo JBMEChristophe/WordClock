@@ -2,6 +2,7 @@
 #include <time.h>
 #include "words.h"
 
+
 #ifdef __AVR__
   #include <avr/power.h>
 #endif
@@ -15,7 +16,7 @@
 
 Adafruit_NeoPixel strip;
 
-byte neopixel_grid[10][11] = {
+const byte neopixel_grid[10][11] = {
  { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 },
  { 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11 },
  { 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32 },
@@ -40,27 +41,31 @@ void setup() {
   Serial.begin(9600);
 
   //perform a self to check whether all the LEDS are working.
-  self_test(&strip, neopixel_grid, ROWS, COLUMNS, 0xFFFFFFFF, 100); 
+  self_test(&strip, neopixel_grid, ROWS, COLUMNS, 0xFFFFFFFF, 50); 
   
   t.tm_sec = 0;
-  t.tm_min = 27;
+  t.tm_min = 50;
   t.tm_hour = 11;
 }
 
 void loop() {
     strip.clear();
-    displayTime(&t, &strip, neopixel_grid, 0x00FF0000);
+
+    float temp = 73.0;
+
+    displayTemperature(&strip, neopixel_grid, temp, strip.Color(128,0,128,0));
+    //displayTime(&t, &strip, neopixel_grid, 0x00FF0000);
 
     strip.show();
 
-    t.tm_min += 1;
-    if(t.tm_min == 60) { 
-      t.tm_min = 0; 
-      t.tm_hour += 1;
-    }
-    if (t.tm_hour > 24) {
-      t.tm_hour = 0;
-    }
-    delay(500); 
+    // t.tm_min += 1;
+    // if(t.tm_min == 60) { 
+    //   t.tm_min = 0; 
+    //   t.tm_hour += 1;
+    // }
+    // if (t.tm_hour == 24) {
+    //   t.tm_hour = 0;
+    // }
+    delay(5000); 
   }
 
