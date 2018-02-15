@@ -3,15 +3,6 @@
 
 #define MINUS 11
 
-typedef struct letter
-{
-	byte b0 : 1;
-	byte b1 : 1;
-	byte b2 : 1;
-	byte b3 : 1;
-	byte b4 : 1;
-} letter;
-
 const byte IMAGES[][8] = {
 {
   B01110000,

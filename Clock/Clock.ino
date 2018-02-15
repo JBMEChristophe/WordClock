@@ -1,22 +1,14 @@
 #include <Adafruit_NeoPixel.h>
 #include <time.h>
-#include "words.h"
-
-
+#include "types.h"
+#include "configuration.h"
 #ifdef __AVR__
   #include <avr/power.h>
 #endif
 
-#define PIN 3
-
-#define NUM_LEDS 110
-#define ROWS 10
-#define COLUMNS 11
-#define BRIGHTNESS 255
-
 Adafruit_NeoPixel strip;
 
-const byte neopixel_grid[10][11] = {
+byte neopixel_grid[ROWS][COLUMNS] = {
  { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 },
  { 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11 },
  { 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32 },
@@ -29,7 +21,7 @@ const byte neopixel_grid[10][11] = {
  { 109, 108, 107, 106, 105, 104, 103, 102, 101, 100, 99 }
 };
 
-
+wordClock wclock;
 struct tm t;
 
 void setup() {
@@ -43,6 +35,14 @@ void setup() {
   //perform a self to check whether all the LEDS are working.
   self_test(&strip, neopixel_grid, ROWS, COLUMNS, 0xFFFFFFFF, 50); 
   
+  wclock.rows = ROWS;
+  wclock.columns = COLUMNS;
+  wclock.strip = &strip;
+  for (int i = 0; i < ROWS; ++i)
+  {
+    memcpy(wclock.grid[i], neopixel_grid[i], COLUMNS * sizeof(neopixel_grid[0][0]));
+  }
+
   t.tm_sec = 0;
   t.tm_min = 50;
   t.tm_hour = 11;
@@ -51,9 +51,9 @@ void setup() {
 void loop() {
     strip.clear();
 
-    float temp = 73.0;
+    float temperature = 73.0;
 
-    displayTemperature(&strip, neopixel_grid, temp, strip.Color(128,0,128,0));
+    displayTemperature(&strip, neopixel_grid, temperature, strip.Color(128,0,128,0));
     //displayTime(&t, &strip, neopixel_grid, 0x00FF0000);
 
     strip.show();

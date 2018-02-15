@@ -1,15 +1,9 @@
 #include <Adafruit_NeoPixel.h>
 #include <time.h>
-#include "words.h"
+#include "types.h"
 #ifdef __AVR__
   #include <avr/power.h>
 #endif
-
-typedef struct wordClock {
-	uint8_t rows;
-	uint8_t columns
-	byte grid[ROWS]
-}
 
 #define SW(w) setWord(strip, neopixel_grid, w, strip->Color(255,0,0,0));
 #define SWC(w, c) setWord(strip, neopixel_grid, w, c);

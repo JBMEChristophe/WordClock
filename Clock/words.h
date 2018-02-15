@@ -1,12 +1,6 @@
 #ifndef WORDS_H
 #define WORDS_H
 
-typedef struct clockFace{
-    uint8_t y;
-    uint8_t x;
-    uint8_t len;
-} clockFace;
-
 #define LANG_DUTCH
 
 #ifdef LANG_DUTCH
