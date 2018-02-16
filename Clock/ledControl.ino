@@ -49,4 +49,35 @@ void setWord(wordClock* clock, clockFace w, uint32_t color) {
   for(int i = 0; i < w.len; i++) {
     clock->strip->setPixelColor(clock->grid[w.x][w.y+i], color);
   }
+<<<<<<< HEAD
 }
+=======
+}
+
+void handle_hours(struct tm* t, Adafruit_NeoPixel* strip, byte grid[ROWS][COLUMNS], uint32_t color)
+{
+  int minutes = t->tm_min - (t->tm_min % 5); //floor to nearest 5
+  int hours   = t->tm_hour;
+  if(minutes > 15) {
+    hours += 1;
+  }
+
+  if(hours > 12) {
+      hours -= 12;
+  }
+
+  if(hours - 1 < 0) { hours = 12; }
+  Serial.print("hours ");
+  Serial.println(hours);
+  SWC(NUMBERS[hours -1], color);
+}
+
+void displayTime(struct tm* t, Adafruit_NeoPixel* strip, byte grid[ROWS][COLUMNS], uint32_t color)
+{
+  SWC(w_IT, color);
+  SWC(w_IS, color);
+  handle_minutes(t, strip, grid, color);
+  handle_minutes_spare(t, strip, grid, strip->Color(0,0,255,0));
+  handle_hours(t, strip, grid, color);
+}
+>>>>>>> parent of 6bc0879... [BUG] hours
