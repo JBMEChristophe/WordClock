@@ -50,7 +50,7 @@ void loop() {
 
     float temperature = 73.0;
 
-    //displayTemperature(&wclock, temperature, strip.Color(128,0,128,0));
+    displayTemperature(&wclock, temperature, strip.Color(128,0,128,0));
     //displayTemperature(&strip, neopixel_grid, temperature, strip.Color(128,0,128,0));
     //displayTime(&t, &strip, neopixel_grid, 0x00FF0000);
 
