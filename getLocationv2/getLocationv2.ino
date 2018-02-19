@@ -4,8 +4,8 @@
 
 String googleApiKey = "AIzaSyDnDX92K9ZC6eTqhDzHmzCltHPHuRT6MFM";
 String owmApiKey = "d816a08dddeb2df937174ddcd3d4b5a3";
-String ssid = "Guest";
-String passwd = "gastennetwerk";
+char ssid[] = "Guest";
+char passwd[] = "gastennetwerk";
 
 void setup() {
     Serial.begin(115200);
