@@ -4,8 +4,8 @@
 
 String googleApiKey = "AIzaSyDnDX92K9ZC6eTqhDzHmzCltHPHuRT6MFM";
 String owmApiKey = "d816a08dddeb2df937174ddcd3d4b5a3";
-String ssid = "Guest";
-String passwd = "gastennetwerk";
+char ssid[] = "Guest";
+char passwd[] = "gastennetwerk";
 
 void setup() {
     Serial.begin(115200);
@@ -19,10 +19,11 @@ void setup() {
         Serial.print(".");
         delay(500);
     }
-    Serial.println("connected");
+    Serial.println(" Connected");
 
-    Serial.print("temperature");
-    Serial.println(getTemperature(owmApiKey));
+    Serial.print("Temperature: ");
+    String httpResponse = getTemperature(owmApiKey);
+    Serial.println(extractTemperature(httpResponse) - 273.15); //conversion to Celsius from Kelvin
     
 }
 
