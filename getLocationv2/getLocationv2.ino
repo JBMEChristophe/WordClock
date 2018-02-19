@@ -22,7 +22,7 @@ void setup() {
     Serial.println("connected");
 
     Serial.print("temperature");
-    Serial.println(getTemperature(owmApiKey));
+    String httpResponse = getTemperature(owmApiKey));
     
 }
 
