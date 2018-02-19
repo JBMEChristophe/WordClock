@@ -23,7 +23,11 @@ void setup() {
 
     Serial.print("Temperature: ");
     String httpResponse = getTemperature(owmApiKey);
+<<<<<<< HEAD
+    Serial.println(extractTemperature(httpResponse) - 273.15); //conversion to Kelvin
+=======
     Serial.println(extractTemperature(httpResponse) - 273.15); //conversion to Celsius from Kelvin
+>>>>>>> develop
     
 }
 

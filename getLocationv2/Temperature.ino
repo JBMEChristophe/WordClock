@@ -2,6 +2,10 @@
 #include <ArduinoJson.h>
 #include <ESP8266WiFi.h>
 #include <ESP8266HTTPClient.h>
+<<<<<<< HEAD
+=======
+#include <string>
+>>>>>>> location
 
 WifiLocation location(googleApiKey);
 
