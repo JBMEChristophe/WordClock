@@ -2,6 +2,7 @@
 #include <ArduinoJson.h>
 #include <ESP8266WiFi.h>
 #include <ESP8266HTTPClient.h>
+#include <string>
 
 WifiLocation location(googleApiKey);
 
@@ -16,19 +17,23 @@ String builtOWMrequest(float lat, float lon, String weatherAppKey){
   return host;
 }
 
+float extractTemperature(String jsonHTTPreponse) {
+  const size_t bufferSize = JSON_ARRAY_SIZE(1) + JSON_OBJECT_SIZE(1) + 2*JSON_OBJECT_SIZE(2) + JSON_OBJECT_SIZE(4) + JSON_OBJECT_SIZE(5) + JSON_OBJECT_SIZE(6) + JSON_OBJECT_SIZE(12) + 400;
+  DynamicJsonBuffer jsonBuffer(bufferSize);
+
+  JsonObject& root = jsonBuffer.parseObject(jsonHTTPreponse);
+  JsonObject& main = root["main"];
+  return main["temp"];
+}
+
 String getTemperature(String weatherAppKey) {
   location_t loc = location.getGeoFromWiFi();
   String request = builtOWMrequest(loc.lat, loc.lon, weatherAppKey);
   String payload = "";
   HTTPClient http;  //Declare an object of class HTTPClient
-
-  Serial.println(request);
  
   http.begin(request);
   int httpCode = http.GET();
-  Serial.println("");
-  Serial.print("httpCode: ");
-  Serial.println(httpCode);
   if (httpCode > 0) { 
     payload = http.getString();
   }

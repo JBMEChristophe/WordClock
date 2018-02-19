@@ -19,10 +19,11 @@ void setup() {
         Serial.print(".");
         delay(500);
     }
-    Serial.println("connected");
+    Serial.println(" Connected");
 
-    Serial.print("temperature");
-    String httpResponse = getTemperature(owmApiKey));
+    Serial.print("Temperature: ");
+    String httpResponse = getTemperature(owmApiKey);
+    Serial.println(extractTemperature(httpResponse) - 273.15); //conversion to Kelvin
     
 }
 
