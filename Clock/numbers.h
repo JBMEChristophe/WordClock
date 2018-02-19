@@ -3,7 +3,7 @@
 
 #define MINUS 11
 
-const byte IMAGES[][8] = {
+const byte NUMBERS[][8] = {
 {
   B01110000,
   B10001000,
@@ -104,6 +104,6 @@ const byte IMAGES[][8] = {
   B00000000,
   B00000000
 }};
-const int IMAGES_LEN = sizeof(IMAGES)/8;
+const int NUMBERS_LEN = sizeof(NUMBERS)/8;
 
 #endif //NUMBERS_H

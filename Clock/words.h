@@ -30,7 +30,7 @@ const clockFace h_ELEVEN   = {8, 1, 3};       //ELF
 const clockFace h_TWELVE   = {0, 0, 6};       //TWAALF
 #endif //LANG_DUTCH
 
-const clockFace NUMBERS[] = {
+const clockFace TEXT_NUMBERS[] = {
 	h_ONE,
 	h_TWO,
 	h_THREE,

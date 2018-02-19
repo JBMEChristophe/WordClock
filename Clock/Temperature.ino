@@ -2,12 +2,9 @@
 #include <ArduinoJson.h>
 #include <ESP8266WiFi.h>
 #include <ESP8266HTTPClient.h>
-<<<<<<< HEAD
-=======
-#include <string>
->>>>>>> location
 
-WifiLocation location(googleApiKey);
+#ifdef ESP8266
+//this is excluded because the these rely on a network connection
 
 String builtOWMrequest(float lat, float lon, String weatherAppKey){
   String host = "http://api.openweathermap.org";
@@ -29,8 +26,8 @@ float extractTemperature(String jsonHTTPreponse) {
   return main["temp"];
 }
 
-String getTemperature(String weatherAppKey) {
-  location_t loc = location.getGeoFromWiFi();
+String getTemperature(WifiLocation* location, String weatherAppKey) {
+  location_t loc = location->getGeoFromWiFi();
   String request = builtOWMrequest(loc.lat, loc.lon, weatherAppKey);
   String payload = "";
   HTTPClient http;  //Declare an object of class HTTPClient
@@ -43,5 +40,7 @@ String getTemperature(String weatherAppKey) {
   http.end();   //Close connection
   return payload;
 }
+
+#endif ESP8266
 
 

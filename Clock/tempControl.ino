@@ -21,7 +21,7 @@ uint8_t* cutTemp(float temperature) {
 
 void showNumber(wordClock* clock, uint8_t numberToDisplay, uint8_t wordHeight, uint8_t xOffset, uint32_t color) {
 	for (uint8_t i = 0; i < wordHeight; ++i) {
-		setPixelRange(clock, xOffset, wordHeight-i, IMAGES[numberToDisplay][i], color);
+		setPixelRange(clock, xOffset, wordHeight-i, NUMBERS[numberToDisplay][i], color);
 	}
 }
 

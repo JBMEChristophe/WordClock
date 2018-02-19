@@ -16,7 +16,7 @@ typedef struct letter
 typedef struct wordClock {
 	int rows;
 	int columns;
-	byte* grid;
+	byte grid[ROWS][COLUMNS];
 	Adafruit_NeoPixel* strip;
 } wordClock;
 

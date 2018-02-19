@@ -2,11 +2,23 @@
 #include <time.h>
 #include "types.h"
 #include "configuration.h"
+
 #ifdef __AVR__
   #include <avr/power.h>
+#elif ESP8266
+  #include "WifiLocation.h"
 #endif
 
+
 Adafruit_NeoPixel strip;
+
+#ifdef ESP8266
+  const String googleApiKey = "AIzaSyDnDX92K9ZC6eTqhDzHmzCltHPHuRT6MFM";
+  const String owmApiKey = "d816a08dddeb2df937174ddcd3d4b5a3";
+
+  WifiLocation location(googleApiKey);
+#endif
+
 
 byte neopixel_grid[ROWS][COLUMNS] = {
  { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 },
@@ -35,7 +47,7 @@ void setup() {
   wclock.rows = ROWS;
   wclock.columns = COLUMNS;
   wclock.strip = &strip;
-  wclock.grid = *neopixel_grid;
+  memcpy(wclock.grid, neopixel_grid, sizeof(neopixel_grid[0][0])*COLUMNS*ROWS);
 
   t.tm_sec = 0;
   t.tm_min = 50;
@@ -56,14 +68,6 @@ void loop() {
 
     strip.show();
 
-    // t.tm_min += 1;
-    // if(t.tm_min == 60) { 
-    //   t.tm_min = 0; 
-    //   t.tm_hour += 1;
-    // }
-    // if (t.tm_hour == 24) {
-    //   t.tm_hour = 0;
-    // }
     delay(5000); 
   }
 

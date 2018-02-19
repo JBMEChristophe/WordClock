@@ -1,5 +1,7 @@
 #include <Adafruit_NeoPixel.h>
+
 #include "words.h"
+#include "numbers.h"
 #include <time.h>
 #ifdef __AVR__
   #include <avr/power.h>
@@ -96,7 +98,7 @@ void handle_hours(struct tm* t, wordClock* clock, uint32_t color)
     hours -= 12;
   }
 
-  SWC(NUMBERS[hours -1], color);
+  SWC(TEXT_NUMBERS[hours -1], color);
 }
 
 void displayTime(struct tm* t, wordClock* clock, uint32_t color)
