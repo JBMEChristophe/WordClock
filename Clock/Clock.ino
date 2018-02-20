@@ -40,7 +40,12 @@ wordClock wclock;
 struct tm time;
 float temperature; 
 
-void setup() {  
+uint8_t rtnv;
+uint8_t* rtnptr;
+
+void setup() { 
+
+#ifdef ESP8266
   //attempt to connect to WiFi
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, passwd);
@@ -51,6 +56,12 @@ void setup() {
   }
   reportln(" Connected", INFO);
 
+  //intialise the time server
+  rtnv = ntp_init(TIMEZONE, DAYLIGHTSAVING)
+  if(rtnval != 0) { repornln("cannot connect to Network Time Server", FATAL); }
+  rtnv = ntp_getTime(&time);
+  if(rtnval != 0) { repornln("cannot retrieve the time from Network Time Server", ERROR); }
+#endif
   //initialise the LED strip
   strip.setBrightness(BRIGHTNESS);
   strip.begin();
@@ -58,17 +69,11 @@ void setup() {
   wclock.rows = ROWS;
   wclock.columns = COLUMNS;
   wclock.strip = &strip;
-  byte* rtn = (byte*)memcpy(wclock.grid, neopixel_grid, sizeof(neopixel_grid[0][0])*COLUMNS*ROWS);
-  if(rtn == NULL){ reportln("system out of memory!", FATAL); }
+  rtnptr = (byte*)memcpy(wclock.grid, neopixel_grid, sizeof(neopixel_grid[0][0])*COLUMNS*ROWS);
+  if(rtnptr == NULL){ reportln("system out of memory!", FATAL); }
 
   //initialise the serial port
   Serial.begin(115200);
-
-  //intialise the time server
-  uint8_t rtnv = ntp_init(TIMEZONE, DAYLIGHTSAVING)
-  if(rtnv != 0) { repornln("cannot connect to Network Time Server", FATAL); }
-  rtnv = ntp_getTime(&time);
-  if(rtnv != 0) { repornln("cannot retrieve the time from Network Time Server", ERROR); }
 
   //perform a self to check whether all the LEDS are working.
    reportln("--------------PERFORMING SELFTEST---------------", INFO);
@@ -77,6 +82,11 @@ void setup() {
 
   delay(1000);
    reportln("--------------STARTING CLOCK--------------------", INFO);
+
+  if(rtnval != 0 || rtnptr != NULL){
+    reportln("An error was encountered: Halting", ERROR);
+    while(1){}
+  }
 }
 
 void loop() {

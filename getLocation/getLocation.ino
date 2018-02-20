@@ -27,27 +27,7 @@ double latitude    = 0.0;
 double longitude   = 0.0;
 double accuracy    = 0.0;
 
-
-void setup()   {
-  Serial.begin(9600);
-
-
-  Serial.println("Start");
-  // Set WiFi to station mode and disconnect from an AP if it was previously connected
-  WiFi.mode(WIFI_STA);
-  WiFi.disconnect();
-  delay(100);
-  WiFi.begin(myssid, mypass);
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-  }
-  Serial.println(".");
-}
-
-
-void loop() {
-  DynamicJsonBuffer jsonBuffer;
+DynamicJsonBuffer* builtPOSTrequest(DynamicJsonBuffer* json, Wifi* wifi) {
   int n = WiFi.scanNetworks();
   // now build the jsonString...
   jsonString = "{\n";
@@ -76,10 +56,32 @@ void loop() {
   }
   jsonString += ("]\n");
   jsonString += ("}\n");
+}
+
+void setup()   {
+  Serial.begin(9600);
+
+
+  Serial.println("Start");
+  // Set WiFi to station mode and disconnect from an AP if it was previously connected
+  WiFi.mode(WIFI_STA);
+  WiFi.disconnect();
+  delay(100);
+  WiFi.begin(myssid, mypass);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println(".");
+}
+
+
+void loop() {
+  DynamicJsonBuffer jsonBuffer;
+
   //--------------------------------------------------------------------
   WiFiClientSecure client;
   if (client.connect(Host, 443)) {
-    Serial.println("Connected");
     client.println("POST " + thisPage + GoogleMapsGeolocationAPIkey + " HTTP/1.1");
     client.println("Host: " + (String)Host);
     client.println("Connection: close");
