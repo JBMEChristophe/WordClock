@@ -10,7 +10,7 @@
 #endif
 
 
-Adafruit_NeoPixel strip;
+Adafruit_NeoPixel strip = Adafruit_NeoPixel(NUM_LEDS, PIN, NEO_GRBW + NEO_KHZ800);
 
 #ifdef ESP8266
   const String googleApiKey = "AIzaSyDnDX92K9ZC6eTqhDzHmzCltHPHuRT6MFM";
@@ -35,11 +35,7 @@ byte neopixel_grid[ROWS][COLUMNS] = {
 wordClock wclock;
 struct tm t;  
 
-void setup() {
-  //strip = Adafruit_NeoPixel(NUM_LEDS, PIN, NEO_GRBW + NEO_KHZ800);
-
-  delay(1000);
-  
+void setup() {  
   strip.setBrightness(BRIGHTNESS);
   strip.begin();
   strip.show(); // Initialize all pixels to 'off'
