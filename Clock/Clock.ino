@@ -15,7 +15,6 @@ Adafruit_NeoPixel strip;
 #ifdef ESP8266
   const String googleApiKey = "AIzaSyDnDX92K9ZC6eTqhDzHmzCltHPHuRT6MFM";
   const String owmApiKey = "d816a08dddeb2df937174ddcd3d4b5a3";
-
   WifiLocation location(googleApiKey);
 #endif
 
@@ -49,7 +48,10 @@ void setup() {
   wclock.rows = ROWS;
   wclock.columns = COLUMNS;
   wclock.strip = &strip;
-  memcpy(wclock.grid, neopixel_grid, sizeof(neopixel_grid[0][0])*COLUMNS*ROWS);
+  byte* rtn = (byte*)memcpy(wclock.grid, neopixel_grid, sizeof(neopixel_grid[0][0])*COLUMNS*ROWS);
+  if(rtn == NULL){
+    Serial.println("FATAL ERROR system out of memory!");
+  }
 
   //perform a self to check whether all the LEDS are working.
   Serial.println("--------------PERFORMING SELFTEST---------------");
