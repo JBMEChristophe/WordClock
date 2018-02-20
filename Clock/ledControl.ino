@@ -32,10 +32,6 @@ void setPixelRange(wordClock* clock, int x, int y, byte pixels, uint32_t color)
 	Serial.println(pixels, BIN);
 	for (int i = sizeof(pixels)*8; i > 0; --i) {
 		if(pixels & (1 << i)) {
-			Serial.print("Pixel: ");
-			Serial.print(i);
-			Serial.print(" : ");
-			Serial.println(pixels & (1 << i));
 			//this is working
 			// strip->setPixelColor(grid[y][x+i], color);
 			clock->strip->setPixelColor(clock->grid[y][x-i], color);

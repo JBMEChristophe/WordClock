@@ -7,6 +7,7 @@
   #include <avr/power.h>
 #elif ESP8266
   #include "WifiLocation.h"
+  #include "ntp.h"
 #endif
 
 
@@ -16,6 +17,9 @@ Adafruit_NeoPixel strip = Adafruit_NeoPixel(NUM_LEDS, PIN, NEO_GRBW + NEO_KHZ800
   const String googleApiKey = "AIzaSyDnDX92K9ZC6eTqhDzHmzCltHPHuRT6MFM";
   const String owmApiKey = "d816a08dddeb2df937174ddcd3d4b5a3";
   WifiLocation location(googleApiKey);
+
+  const char ssid[] = "Guest";
+  const char passwd[] = "gastennetwerk";
 #endif
 
 
@@ -33,36 +37,54 @@ byte neopixel_grid[ROWS][COLUMNS] = {
 };
 
 wordClock wclock;
-struct tm t;  
+struct tm time;
+float temperature; 
 
 void setup() {  
+  //attempt to connect to WiFi
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(ssid, passwd);
+  reportln("Attempting to connect to WPA SSID: " + ssid, INFO);
+  while (WiFi.status() != WL_CONNECTED) {
+      Serial.print(".");
+      delay(500);
+  }
+  reportln(" Connected", INFO);
+
+  //initialise the LED strip
   strip.setBrightness(BRIGHTNESS);
   strip.begin();
-  strip.show(); // Initialize all pixels to 'off'
-  Serial.begin(115200);
-  
+  strip.show();
   wclock.rows = ROWS;
   wclock.columns = COLUMNS;
   wclock.strip = &strip;
   byte* rtn = (byte*)memcpy(wclock.grid, neopixel_grid, sizeof(neopixel_grid[0][0])*COLUMNS*ROWS);
-  if(rtn == NULL){
-    Serial.println("FATAL ERROR system out of memory!");
-  }
+  if(rtn == NULL){ reportln("system out of memory!", FATAL); }
+
+  //initialise the serial port
+  Serial.begin(115200);
+
+  //intialise the time server
+  uint8_t rtnv = ntp_init(TIMEZONE, DAYLIGHTSAVING)
+  if(rtnv != 0) { repornln("cannot connect to Network Time Server", FATAL); }
+  rtnv = ntp_getTime(&time);
+  if(rtnv != 0) { repornln("cannot retrieve the time from Network Time Server", ERROR); }
 
   //perform a self to check whether all the LEDS are working.
-  Serial.println("--------------PERFORMING SELFTEST---------------");
+   reportln("--------------PERFORMING SELFTEST---------------", INFO);
   self_test(&wclock, ROWS, COLUMNS, 0xFFFFFFFF, 50); 
-  Serial.println("--------------FINISHING SELFTEST----------------");
+   reportln("--------------FINISHING SELFTEST----------------", INFO);
+
+  delay(1000);
+   reportln("--------------STARTING CLOCK--------------------", INFO);
 }
 
 void loop() {
     strip.clear();
 
-    //float temperature = 73.0;
-
-    //displayTemperature(&wclock, temperature, strip.Color(128,0,128,0));
-    //displayTemperature(&strip, neopixel_grid, temperature, strip.Color(128,0,128,0));
-    //displayTime(&t, &strip, neopixel_grid, 0x00FF0000);
+  //displayTemperature(&wclock, temperature, strip.Color(128,0,128,0));
+  //displayTemperature(&strip, neopixel_grid, temperature, strip.Color(128,0,128,0));
+  //displayTime(&t, &strip, neopixel_grid, 0x00FF0000);
 
     strip.show();
 
