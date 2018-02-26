@@ -12,14 +12,14 @@
 #define SWC(w, c) setWord(clock, w, c);
 
 //TESTING FOR INITIALISATION
-void self_test(wordClock* clock, int rows, int columns, uint32_t color, int ms) {
-  for(int x = 0; x < rows; x++) {
-    for(int y = 0; y < columns; y++) {
+void self_test(wordClock* clock, uint32_t color, int ms) {
+  for(int x = 0; x < clock->rows; x++) {
+    for(int y = 0; y < clock->columns; y++) {
       clock->strip->setPixelColor(clock->grid[x][y], color);
       clock->strip->show();
     }
     delay(ms);
-    for(int y = 0; y < columns; y++) {
+    for(int y = 0; y < clock->columns; y++) {
       clock->strip->setPixelColor(clock->grid[x][y], 0x00000000);
       clock->strip->show();
     }

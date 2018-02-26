@@ -10,6 +10,16 @@
 #define COLUMNS 11
 #define BRIGHTNESS 255
 
+#define TIME_RETRIEVAL_INTERVAL_MS 840000 //every 14 minutes
+#define TEMP_RETRIEVAL_INTERVAL_MS 900000 //every 15 minutes
+
+#define SECOND_INTERVAL_MS 1000
+
+#define T_DISPLAY1 10
+#define T_DISPLAY2 40
+
+#define T_DISPLAY_DUR 5
+
 #define NTP_SERVER_1 "pool.ntp.org"
 #define NTP_SERVER_2 "time.nist.gov"
 
@@ -25,12 +35,14 @@
 
 void reportln(String s, int severity) {
 	if(severity <= REPORTING_LEVEL) {
-		if(severity == FATAL) Serial.print("FATAL: ");
-		else if (severity == ERROR)	Serial.print("ERROR: ");
-		else if (severity == WARN)	Serial.print("WARN: ");
-		else if (severity == INFO)	Serial.print("INFO: ");
-		else if (severity == DEBUG)	Serial.print("DEBUG: ");
-		else Serial.print("Undefined severity: ");
+		switch (severity){
+			case FATAL:		Serial.print("FATAL: "); break;
+			case ERROR:		Serial.print("ERROR: "); break;
+			case WARN:		Serial.print("WARN: "); break;
+			case INFO:		Serial.print("INFO: "); break;
+			case DEBUG:		Serial.print("DEBUG: "); break;
+			default:		Serial.print("Undefined severity: "); break;
+		}
 		Serial.println(s);
 	}
 }
