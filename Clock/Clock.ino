@@ -58,8 +58,9 @@ void addsecond(struct tm* currentTime, uint32_t milliseconds) {
 
 uint8_t minuteChanged(struct tm* currentTime) {
   static time_t oldTime = 0;
-  if(mktime(oldTime) < mktime(currentTime) - 60){
-    oltTime = currentTime;
+  time_t c_currentTime = mktime(currentTime);
+  if(oldTime < c_currentTime - 60){
+    oldTime = c_currentTime;
     return 1;
   }
   return 0;
@@ -140,7 +141,7 @@ void loop() {
     }
   }
 
-  if(minuteChanged()) {
+  if(minuteChanged(&timestruct)) {
     displayTime(&timestruct, &wclock, wclock.strip->Color(0,255,0,0));
     strip.show();
   }
