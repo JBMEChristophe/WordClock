@@ -56,6 +56,16 @@ void addsecond(struct tm* currentTime, uint32_t milliseconds) {
   *currentTime = *(localtime(&unixTime));
 }
 
+uint8_t minuteChanged(struct tm* currentTime) {
+  static time_t oldTime = 0;
+  if(mktime(oldTime) < mktime(currentTime) - 60){
+    oltTime = currentTime;
+    return 1;
+  }
+  return 0;
+}
+
+
 void setup() { 
   //initialise the LED strip
   strip.setBrightness(BRIGHTNESS);
@@ -95,7 +105,7 @@ void setup() {
       {
         wclock.strip->setPixelColor(0, wclock.strip->Color(255,0,0,0));
         if(!reportOnce){
-          reportln("could not connect to WiFi, I will keep trying", WARN);
+          reportln("The device could not connect to the provided SSID", WARN);
           reportOnce = true;
         }
       }
@@ -129,30 +139,14 @@ void loop() {
       reportln("Could not sync time with the NTS", WARN);
     }
   }
-  //interval based retrieval of the temperature
-  if(current - previous[1] > TEMP_RETRIEVAL_INTERVAL_MS) {
-    String httpResponse = getTemperature(&location, owmApiKey);
-    temperature = extractTemperature(httpResponse);
-    if(temperature == NULL) {
-      reportln("Could not retrieve retrieve temperature from Openweathermap.com", WARN);
-    }
-  }
 
-  //display temperature between 10 and 15 and between 40 and 45
-  uint8_t interval1 = timestruct.tm_sec > T_DISPLAY1 && timestruct.tm_sec < (T_DISPLAY1 + T_DISPLAY_DUR);
-  uint8_t interval2 = timestruct.tm_sec > T_DISPLAY2 && timestruct.tm_sec < (T_DISPLAY2 + T_DISPLAY_DUR);
-  if(interval1 || interval2) {
-    reportln("Displaying temperature", INFO);
-    displayTemperature(&wclock, temperature, wclock.strip->Color(128,0,128,0));
-  }
-  else {
+  if(minuteChanged()) {
     displayTime(&timestruct, &wclock, wclock.strip->Color(0,255,0,0));
+    strip.show();
   }
 
   if(current - previous[2] > SECOND_INTERVAL_MS) {
     addsecond(&timestruct, current - previous[2]);
   }
-
-  strip.show();
 }
 
