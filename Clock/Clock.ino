@@ -19,8 +19,8 @@ Adafruit_NeoPixel strip = Adafruit_NeoPixel(NUM_LEDS, PIN, NEO_GRBW + NEO_KHZ800
   const String owmApiKey = "d816a08dddeb2df937174ddcd3d4b5a3";
   WifiLocation location(googleApiKey);
 
-  const char ssid[] = "Guest";
-  const char passwd[] = "gastennetwerk";
+  const char ssid[] = L_SSID;
+  const char passwd[] = L_PASSW;
 #endif
 
 
@@ -43,8 +43,10 @@ float temperature;
 
 uint8_t rtnval;
 uint8_t* rtnptr;
+uint8_t connectionAttempts;
 
 long previous[3] = { 0 };
+uint8_t reportOnce = 0;
 
 
 //this should correct any jitter
@@ -76,6 +78,8 @@ void setup() {
   delay(1000);
 
 #ifdef ESP8266
+  connectionAttempts = 0;
+
   //attempt to connect to WiFi
   Serial.println("--------------connecting to WiFI:---------------");
   Serial.print("attempting to connect to: ");
@@ -84,8 +88,17 @@ void setup() {
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, passwd);
   while (WiFi.status() != WL_CONNECTED) {
+      connectionAttempts++;
       Serial.print(".");
       delay(500);
+      if(connectionAttempts > CONNECTIONATTEMPTS)
+      {
+        wclock.strip->setPixelColor(0, wclock.strip->Color(255,0,0,0));
+        if(!reportOnce){
+          reportln("could not connect to WiFi, I will keep trying", WARN);
+          reportOnce = true;
+        }
+      }
   }
   reportln(" Connected", INFO);
 

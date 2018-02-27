@@ -1,6 +1,9 @@
 #ifndef CONFIGURATION_H
 #define CONFIGURATION_H
 
+#define L_SSID "Guest"
+#define L_PASSW "gastennetwerk"
+
 #define TIMEZONE +1
 #define DAYLIGHTSAVING 0
 
@@ -12,6 +15,7 @@
 
 #define TIME_RETRIEVAL_INTERVAL_MS 840000 //every 14 minutes
 #define TEMP_RETRIEVAL_INTERVAL_MS 900000 //every 15 minutes
+#define CONNECTIONATTEMPTS 60			  //try connecting for 30 secs
 
 #define SECOND_INTERVAL_MS 1000
 
@@ -38,7 +42,7 @@ void reportln(String s, int severity) {
 		switch (severity){
 			case FATAL:		Serial.print("FATAL: "); break;
 			case ERROR:		Serial.print("ERROR: "); break;
-			case WARN:		Serial.print("WARN: "); break;
+			case WARN:		Serial.print("WARNING: "); break;
 			case INFO:		Serial.print("INFO: "); break;
 			case DEBUG:		Serial.print("DEBUG: "); break;
 			default:		Serial.print("Undefined severity: "); break;
