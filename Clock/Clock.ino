@@ -47,27 +47,42 @@ uint8_t connectionAttempts;
 
 long previous[3] = { 0 };
 uint8_t reportOnce = 0;
-
+int count = 0;
 
 //this should correct any jitter
-void addsecond(struct tm* currentTime, uint32_t milliseconds) {
+void addsecond(struct tm* currentTime) {
   time_t unixTime = mktime(currentTime);
-  unixTime += (uint32_t)round((float)milliseconds/1000);
+  unixTime += 1;
   *currentTime = *(localtime(&unixTime));
 }
 
+time_t oldTime = 0;
+uint8_t once = 0;
 uint8_t minuteChanged(struct tm* currentTime) {
-  static time_t oldTime = 0;
   time_t c_currentTime = mktime(currentTime);
-  if(oldTime < c_currentTime - 60){
-    oldTime = c_currentTime;
-    return 1;
-  }
+  if(c_currentTime % 60 == 0) {
+    if(oldTime % 60 != 0 ){
+      oldTime = c_currentTime;
+      return 1;
+    }
+  }  
   return 0;
 }
 
 
-void setup() { 
+void timer0_isr(void){
+  if(count > TIM_POSTSCALER)
+  {
+      addsecond(&timestruct);
+  }
+  count++;
+}
+
+
+void setup() {
+  //initialise the serial port
+  Serial.begin(115200);
+
   //initialise the LED strip
   strip.setBrightness(BRIGHTNESS);
   strip.begin();
@@ -83,8 +98,6 @@ void setup() {
   self_test(&wclock, 0xFFFFFFFF, 50); 
   reportln("--------------FINISHING SELFTEST----------------", INFO);
 
-  //initialise the serial port
-  Serial.begin(115200);
 
   delay(1000);
 
@@ -92,12 +105,15 @@ void setup() {
   connectionAttempts = 0;
 
   //attempt to connect to WiFi
-  Serial.println("--------------connecting to WiFI:---------------");
+  reportln("--------------connecting to WiFI:---------------", INFO);
   Serial.print("attempting to connect to: ");
   Serial.println(ssid);
 
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, passwd);
+  delay(500);
+  pinMode(LED_BUILTIN, OUTPUT);
+  digitalWrite(LED_BUILTIN, HIGH);
   while (WiFi.status() != WL_CONNECTED) {
       connectionAttempts++;
       Serial.print(".");
@@ -108,29 +124,36 @@ void setup() {
         if(!reportOnce){
           reportln("The device could not connect to the provided SSID", WARN);
           reportOnce = true;
+          strip.show();
         }
       }
   }
   reportln(" Connected", INFO);
 
   //intialise the time server
+  reportln("--------------connecting to NTP-----------------", INFO);
   rtnval = ntp_init(TIMEZONE, DAYLIGHTSAVING);
   if(rtnval != 0) { reportln("cannot connect to Network Time Server", FATAL); }
   rtnval = ntp_getTime(&timestruct);
   if(rtnval != 0) { reportln("cannot retrieve the time from Network Time Server", ERROR); }
+
+  //init the interrupt which is triggered 1/
+  noInterrupts();
+  timer1_isr_init();
+  timer1_enable(TIM_DIV265, TIM_EDGE, TIM_LOOP);
+  timer1_attachInterrupt(timer0_isr);
+  timer1_write(F_CPU/TIM_PRESCALER/TIM_POSTSCALER); // 1/200 sec
+  interrupts();
 #endif
-
   reportln("--------------STARTING CLOCK--------------------", INFO);
-
-  if(rtnval != 0 || rtnptr != NULL){
+  
+  if(rtnval != 0 || rtnptr == NULL){
     reportln("An error was encountered: Halting", ERROR);
     while(1){}
   }
 }
 
 void loop() {
-  strip.clear();
-
   long current = millis();
   //interval based retrieval of the Time
   if(current - previous[0] > TIME_RETRIEVAL_INTERVAL_MS) {
@@ -142,12 +165,10 @@ void loop() {
   }
 
   if(minuteChanged(&timestruct)) {
+    strip.clear();
+    reportln("A minute has passed, updating clockface", DEBUG);
     displayTime(&timestruct, &wclock, wclock.strip->Color(0,255,0,0));
     strip.show();
-  }
-
-  if(current - previous[2] > SECOND_INTERVAL_MS) {
-    addsecond(&timestruct, current - previous[2]);
   }
 }
 

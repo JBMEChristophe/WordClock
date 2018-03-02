@@ -13,6 +13,9 @@
 #define COLUMNS 11
 #define BRIGHTNESS 255
 
+#define TIM_POSTSCALER 200
+#define TIM_PRESCALER 256
+
 #define TIME_RETRIEVAL_INTERVAL_MS 840000 //every 14 minutes
 #define TEMP_RETRIEVAL_INTERVAL_MS 900000 //every 15 minutes
 #define CONNECTIONATTEMPTS 60			  //try connecting for 30 secs
