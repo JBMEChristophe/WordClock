@@ -38,7 +38,8 @@ byte neopixel_grid[ROWS][COLUMNS] = {
 };
 
 wordClock wclock;
-struct tm timestruct = { 0 } ;
+struct tm timestruct = { 0 };
+struct tm prevTime   = { 0 };
 u8 firstTimerecv = 0;
 
 
@@ -57,31 +58,42 @@ void addsecond(struct tm* currentTime) {
   *currentTime = *(localtime(&unixTime));
 }
 
-time_t oldTime = 0;
-uint8_t once = 0;
-uint8_t minuteChanged(struct tm* currentTime) {
-  time_t c_currentTime = mktime(currentTime);
-  if(c_currentTime % 60 == 0) {
-    if(oldTime % 60 != 0 ){
-      oldTime = c_currentTime;
-      return 1;
-    }
-  }  
-  return 0;
+void setClockDisplay() {
+  strip.clear();
+  displayTime(&timestruct, &wclock, wclock.strip->Color(0,255,0,0));
+  strip.show();
 }
 
 //is triggered at 200hz
-void timer0_isr(void){
+void timer1_isr(void){
   if(count > TIM_POSTSCALER) //triggers once a sec
   {
     String s = "Time after increment: " + String(asctime(&timestruct));
     reportln(s, DEBUG);
-    elapsed_time_s[0]++;
-    count = 0;
+
+    //interval based retrieval of the Time
+    if(elapsed_time_s[0]++ > TIME_RETRIEVAL_INTERVAL_M * 60 || !firstTimerecv) {
+      reportln("Retrieving time from using NTP", INFO);
+      rtnval = ntp_getTime(&timestruct);
+      if(rtnval != 0) {
+        reportln("Could not sync time with the NTS", WARN);
+      }
+      elapsed_time_s[0] = 0;
+      firstTimerecv = 1;
+    }
+
     digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
+    prevTime = timestruct;
     addsecond(&timestruct);
+    if(prevTime.tm_sec == 59 && timestruct.tm_sec == 00) {
+        reportln("A minute has passed, updating clockface", DEBUG);
+        setClockDisplay();
+    }
+    count = 0;
   }
-  count++;
+  else {
+    count++;
+  }
 }
 
 
@@ -146,7 +158,7 @@ void setup() {
   noInterrupts();
   timer1_isr_init();
   timer1_enable(TIM_DIV265, TIM_EDGE, TIM_LOOP);
-  timer1_attachInterrupt(timer0_isr);
+  timer1_attachInterrupt(timer1_isr);
   timer1_write(F_CPU/TIM_PRESCALER/TIM_POSTSCALER); // 1/200 sec
     #endif
   
@@ -155,31 +167,10 @@ void setup() {
     while(1){}
   }
 
-  reportln("----------GETTING EVERYTHING SET UP-------------", INFO);
-  delay(5000); //give everything the time to get up and running and make de neccessary connections.
-  yield();
-
   reportln("--------------STARTING CLOCK--------------------", INFO);
   interrupts();
 }
 
 void loop() {
-  //interval based retrieval of the Time
-  if(elapsed_time_s[0] > TIME_RETRIEVAL_INTERVAL_M * 60 || !firstTimerecv) {
-    reportln("Retrieving time from using NTP", INFO);
-    rtnval = ntp_getTime(&timestruct);
-    if(rtnval != 0) {
-      reportln("Could not sync time with the NTS", WARN);
-    }
-    elapsed_time_s[0] = 0;
-    firstTimerecv = 1;
-  }
-
-  if(minuteChanged(&timestruct)) {
-    strip.clear();
-    reportln("A minute has passed, updating clockface", DEBUG);
-    displayTime(&timestruct, &wclock, wclock.strip->Color(0,255,0,0));
-    strip.show();
-  }
 }
 
