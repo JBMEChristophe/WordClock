@@ -38,14 +38,15 @@ byte neopixel_grid[ROWS][COLUMNS] = {
 };
 
 wordClock wclock;
-struct tm timestruct;
-float temperature; 
+struct tm timestruct = { 0 } ;
+u8 firstTimerecv = 0;
+
 
 uint8_t rtnval;
 uint8_t* rtnptr;
 uint8_t connectionAttempts;
 
-long previous[3] = { 0 };
+uint32_t elapsed_time_s[3] = { 0 };
 uint8_t reportOnce = 0;
 int count = 0;
 
@@ -69,17 +70,26 @@ uint8_t minuteChanged(struct tm* currentTime) {
   return 0;
 }
 
-
+//is triggered at 200hz
 void timer0_isr(void){
-  if(count > TIM_POSTSCALER)
+  if(count > TIM_POSTSCALER) //triggers once a sec
   {
-      addsecond(&timestruct);
+    String s = "Time after increment: " + String(asctime(&timestruct));
+    reportln(s, DEBUG);
+    elapsed_time_s[0]++;
+    count = 0;
+    digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
+    addsecond(&timestruct);
   }
   count++;
 }
 
 
 void setup() {
+  //set the internal LED as output
+  pinMode (LED_BUILTIN, OUTPUT);
+  digitalWrite(LED_BUILTIN, LOW);
+
   //initialise the serial port
   Serial.begin(115200);
 
@@ -87,6 +97,8 @@ void setup() {
   strip.setBrightness(BRIGHTNESS);
   strip.begin();
   strip.show();
+
+  //initialise the clock struct
   wclock.rows = ROWS;
   wclock.columns = COLUMNS;
   wclock.strip = &strip;
@@ -101,19 +113,14 @@ void setup() {
 
   delay(1000);
 
-#ifdef ESP8266
-  connectionAttempts = 0;
+  #ifdef ESP8266
 
   //attempt to connect to WiFi
+  connectionAttempts = 0;
   reportln("--------------connecting to WiFI:---------------", INFO);
-  Serial.print("attempting to connect to: ");
-  Serial.println(ssid);
-
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, passwd);
   delay(500);
-  pinMode(LED_BUILTIN, OUTPUT);
-  digitalWrite(LED_BUILTIN, HIGH);
   while (WiFi.status() != WL_CONNECTED) {
       connectionAttempts++;
       Serial.print(".");
@@ -128,14 +135,12 @@ void setup() {
         }
       }
   }
-  reportln(" Connected", INFO);
+  reportln("Connected", INFO);
 
   //intialise the time server
   reportln("--------------connecting to NTP-----------------", INFO);
   rtnval = ntp_init(TIMEZONE, DAYLIGHTSAVING);
   if(rtnval != 0) { reportln("cannot connect to Network Time Server", FATAL); }
-  rtnval = ntp_getTime(&timestruct);
-  if(rtnval != 0) { reportln("cannot retrieve the time from Network Time Server", ERROR); }
 
   //init the interrupt which is triggered 1/
   noInterrupts();
@@ -143,25 +148,31 @@ void setup() {
   timer1_enable(TIM_DIV265, TIM_EDGE, TIM_LOOP);
   timer1_attachInterrupt(timer0_isr);
   timer1_write(F_CPU/TIM_PRESCALER/TIM_POSTSCALER); // 1/200 sec
-  interrupts();
-#endif
-  reportln("--------------STARTING CLOCK--------------------", INFO);
+    #endif
   
   if(rtnval != 0 || rtnptr == NULL){
     reportln("An error was encountered: Halting", ERROR);
     while(1){}
   }
+
+  reportln("----------GETTING EVERYTHING SET UP-------------", INFO);
+  delay(5000); //give everything the time to get up and running and make de neccessary connections.
+  yield();
+
+  reportln("--------------STARTING CLOCK--------------------", INFO);
+  interrupts();
 }
 
 void loop() {
-  long current = millis();
   //interval based retrieval of the Time
-  if(current - previous[0] > TIME_RETRIEVAL_INTERVAL_MS) {
+  if(elapsed_time_s[0] > TIME_RETRIEVAL_INTERVAL_M * 60 || !firstTimerecv) {
     reportln("Retrieving time from using NTP", INFO);
     rtnval = ntp_getTime(&timestruct);
     if(rtnval != 0) {
       reportln("Could not sync time with the NTS", WARN);
     }
+    elapsed_time_s[0] = 0;
+    firstTimerecv = 1;
   }
 
   if(minuteChanged(&timestruct)) {
