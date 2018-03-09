@@ -13,16 +13,19 @@
 
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(NUM_LEDS, PIN, NEO_GRBW + NEO_KHZ800);
 
-#ifdef ESP8266
-#warning "Compiling for the ESP8266!"
-  const String googleApiKey = "AIzaSyDnDX92K9ZC6eTqhDzHmzCltHPHuRT6MFM";
-  const String owmApiKey = "d816a08dddeb2df937174ddcd3d4b5a3";
-  WifiLocation location(googleApiKey);
+const String googleApiKey = "AIzaSyDnDX92K9ZC6eTqhDzHmzCltHPHuRT6MFM";
+const String owmApiKey = "d816a08dddeb2df937174ddcd3d4b5a3";
+WifiLocation location(googleApiKey);
 
-  const char ssid[] = L_SSID;
-  const char passwd[] = L_PASSW;
-#endif
+const char ssid[] = L_SSID;
+const char passwd[] = L_PASSW;
 
+uint8 red = 0;
+uint8 blue = 0;
+uint8 green = 255;
+uint8 white = 0;
+
+uint32 color = 0;
 
 byte neopixel_grid[ROWS][COLUMNS] = {
  { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 },
@@ -59,8 +62,12 @@ void addsecond(struct tm* currentTime) {
 }
 
 void setClockDisplay() {
+  reportln("updating clockface", DEBUG);
   strip.clear();
-  displayTime(&timestruct, &wclock, wclock.strip->Color(0,255,0,0));
+
+  //color = liminousityCorrection(&wclock, red, green, blue, white);
+  color = wclock.strip->Color(red, green, blue, white);
+  displayTime(&timestruct, &wclock, color);
   strip.show();
 }
 
@@ -79,6 +86,7 @@ void timer1_isr(void){
         reportln("Could not sync time with the NTS", WARN);
       }
       elapsed_time_s[0] = 0;
+      setClockDisplay();
       firstTimerecv = 1;
     }
 
@@ -86,7 +94,7 @@ void timer1_isr(void){
     prevTime = timestruct;
     addsecond(&timestruct);
     if(prevTime.tm_sec == 59 && timestruct.tm_sec == 00) {
-        reportln("A minute has passed, updating clockface", DEBUG);
+        reportln("A minute has passed", DEBUG);
         setClockDisplay();
     }
     count = 0;
@@ -106,7 +114,7 @@ void setup() {
   Serial.begin(115200);
 
   //initialise the LED strip
-  strip.setBrightness(BRIGHTNESS);
+  strip.setBrightness(MAX_BRIGHTNESS);
   strip.begin();
   strip.show();
 
@@ -124,8 +132,6 @@ void setup() {
 
 
   delay(1000);
-
-  #ifdef ESP8266
 
   //attempt to connect to WiFi
   connectionAttempts = 0;
@@ -147,7 +153,10 @@ void setup() {
         }
       }
   }
-  reportln("Connected", INFO);
+  String s = "-----------Connection established--------------";
+  reportln(s, INFO);
+  s = "IP-Address: " + WiFi.localIP().toString();
+  reportln(s, INFO);
 
   //intialise the time server
   reportln("--------------connecting to NTP-----------------", INFO);
@@ -160,7 +169,6 @@ void setup() {
   timer1_enable(TIM_DIV265, TIM_EDGE, TIM_LOOP);
   timer1_attachInterrupt(timer1_isr);
   timer1_write(F_CPU/TIM_PRESCALER/TIM_POSTSCALER); // 1/200 sec
-    #endif
   
   if(rtnval != 0 || rtnptr == NULL){
     reportln("An error was encountered: Halting", ERROR);
@@ -168,9 +176,17 @@ void setup() {
   }
 
   reportln("--------------STARTING CLOCK--------------------", INFO);
-  interrupts();
+  interrupts(); //starting the interrupt after all initialisation is done
 }
 
 void loop() {
+  float brightness = analogRead(A0);
+  Serial.println("before correction: \t" + String(brightness));
+  brightness = map(brightness, 0, 1024, 0, 255); 
+  Serial.println("raw:"  + String(brightness));
+  brightness = pow(brightness, 1/GAMMA) / pow(MAX_BRIGHTNESS, 1/GAMMA);
+  brightness = brightness * MAX_BRIGHTNESS;
+  Serial.println("after correction: \t" + String(brightness) + "\n");
+  wclock.strip->setBrightness((uint8_t)map(brightness, 0, 255, 1, 255));
+  wclock.strip->show();
 }
-

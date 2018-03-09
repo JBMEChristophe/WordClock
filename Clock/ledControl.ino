@@ -33,7 +33,6 @@ void setPixelRange(wordClock* clock, int x, int y, byte pixels, uint32_t color)
 	for (int i = sizeof(pixels)*8; i > 0; --i) {
 		if(pixels & (1 << i)) {
 			//this is working
-			// strip->setPixelColor(grid[y][x+i], color);
 			clock->strip->setPixelColor(clock->grid[y][x-i], color);
 		}
 		else {
@@ -48,4 +47,28 @@ void setWord(wordClock* clock, clockFace w, uint32_t color) {
   for(int i = 0; i < w.len; i++) {
     clock->strip->setPixelColor(clock->grid[w.x][w.y+i], color);
   }
+}
+
+uint32_t liminousityCorrection(wordClock* clock, uint8 red, uint8 green, uint8 blue, uint8 white){
+  float RMCDavg = ((R_MCD_L+R_MCD_H)/2);
+  float GMCDavg = ((G_MCD_L+G_MCD_H)/2);
+  float BMCDavg = ((B_MCD_L+B_MCD_H)/2);
+
+  long Cgreen = green * RMCDavg;
+  long Cred = red * GMCDavg;
+  long Cblue = blue * BMCDavg;
+  uint8_t lcred   = (uint8_t)map(Cred, 0, 255*RMCDavg, 0, 255);
+  uint8_t lcgreen = (uint8_t)map(Cgreen, 0, 255*GMCDavg, 0, 255);
+  uint8_t lcblue = (uint8_t)map(Cblue, 0, 255*BMCDavg, 0, 255);
+
+  return clock->strip->Color(lcred,lcblue,lcgreen,white);
+}
+
+ uint8_t gammaCorrection(wordClock* clock, uint8 red, uint8 green, uint8 blue, uint8 white){
+  float Cred = pow(red/255, 1/clock->strip->gamma8(1)) * 255;
+  float Cgreen = pow(green/255, 1/clock->strip->gamma8(1)) * 255;
+  float Cblue = pow(blue/255, 1/clock->strip->gamma8(1)) * 255;
+  float Cwhite = pow(white/255, 1/clock->strip->gamma8(1)) * 255;
+  uint8_t c = (Cred + Cgreen + Cblue + Cwhite) / 4;
+  return c;
 }

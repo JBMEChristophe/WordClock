@@ -10,7 +10,6 @@ uint8_t ntp_init(float timezone_hours, float daylightOffset_hours) {
 	configTime(timezone_hours*3600, daylightOffset_hours, NTP_SERVER_1, NTP_SERVER_2);
 	while(!time(nullptr)) {
 	}
-	ntp_getTime(nullptr);
 	interrupts();
 	return 0;
 }
