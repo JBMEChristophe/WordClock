@@ -181,12 +181,9 @@ void setup() {
 
 void loop() {
   float brightness = analogRead(A0);
-  Serial.println("before correction: \t" + String(brightness));
   brightness = map(brightness, 0, 1024, 0, 255); 
-  Serial.println("raw:"  + String(brightness));
   brightness = pow(brightness, 1/GAMMA) / pow(MAX_BRIGHTNESS, 1/GAMMA);
   brightness = brightness * MAX_BRIGHTNESS;
-  Serial.println("after correction: \t" + String(brightness) + "\n");
   wclock.strip->setBrightness((uint8_t)map(brightness, 0, 255, 1, 255));
   wclock.strip->show();
 }

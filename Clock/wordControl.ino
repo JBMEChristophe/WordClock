@@ -70,13 +70,13 @@ void handle_minutes_spare(struct tm* t, wordClock* clock, uint32_t color)
 
   switch (mod_min) {
   case 4:
-    clock->strip->setPixelColor(clock->grid[5][5], color);
+    clock->strip->setPixelColor(clock->grid[4][6], color);
   case 3:
-    clock->strip->setPixelColor(clock->grid[5][4], color);
-  case 2:
-    clock->strip->setPixelColor(clock->grid[4][5], color);
-  case 1:
     clock->strip->setPixelColor(clock->grid[4][4], color);
+  case 2:
+    clock->strip->setPixelColor(clock->grid[5][6], color);
+  case 1:
+    clock->strip->setPixelColor(clock->grid[5][4], color);
     break;
   default:
     break;
