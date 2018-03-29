@@ -1,5 +1,6 @@
 #include <Adafruit_NeoPixel.h>
 #include <time.h>
+#include <EEPROM.h>
 #include <math.h>
 
 #include "types.h"
@@ -11,21 +12,39 @@
   #include "WifiLocation.h"
 #endif
 
+#ifdef ESP_BLYNK
+  #include <BlynkSimpleEsp8266.h>
+#endif //ESP_BLYNK
+
+#ifdef ESP_EEPROM
+  #include <EEPROM.h>
+#endif //ESP_EEPROM
+
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(NUM_LEDS, PIN, NEO_GRBW + NEO_KHZ800);
 
 const String googleApiKey = "AIzaSyDnDX92K9ZC6eTqhDzHmzCltHPHuRT6MFM";
 const String owmApiKey = "d816a08dddeb2df937174ddcd3d4b5a3";
+const String blynkApiKey = "741a7e8900c04fd8ada0297a956b1c77";
 WifiLocation location(googleApiKey);
 
 const char ssid[] = L_SSID;
 const char passwd[] = L_PASSW;
 
-uint8 red = 0;
-uint8 blue = 0;
-uint8 green = 255;
+uint8 red = 76;
+uint8 green = 0;
+uint8 blue = 126;
 uint8 white = 0;
-
 uint32 color = 0;
+
+uint8 m_red = 126;
+uint8 m_green = 0;
+uint8 m_blue = 76;
+uint8 m_white = 0;
+uint32 m_color = 0;
+
+uint8_t auto_brightness_en;
+uint8_t man_brightness;
+uint8_t spare_minutes_en = 1;
 
 byte neopixel_grid[ROWS][COLUMNS] = {
  { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 },
@@ -54,6 +73,98 @@ uint32_t elapsed_time_s[3] = { 0 };
 uint8_t reportOnce = 0;
 int count = 0;
 
+#ifdef ESP_BLYNK
+
+BLYNK_WRITE(V0){ //zeRGBa control
+  red = param[0].asInt();
+  green = param[1].asInt();
+  blue = param[2].asInt();
+  white = 0;
+  if(red == 255 && green == 255 && blue == 255){
+    red = 0; green = 0; blue = 0; white = 255;
+  }
+
+  String s = "red: " + String(red);
+  reportln(s, DEBUG);
+  s = "blue: " + String(blue);
+  reportln(s, DEBUG);
+  s = "green: "  + String(green);
+  reportln(s, DEBUG);
+
+
+  #ifdef ESP_EEPROM
+  EEPROM.write(E_MEM_RED, red);
+  EEPROM.write(E_MEM_GREEN, green);
+  EEPROM.write(E_MEM_BLUE, blue);
+  EEPROM.write(E_MEM_WHITE, white);
+  EEPROM.commit();
+  #endif //ESP_EEPROM
+
+  setClockDisplay();
+}
+
+BLYNK_WRITE(V1){ //TEMPERATURE_DISPLAY
+
+}
+
+BLYNK_WRITE(V2){ //SELF_TEST
+  reportln("Blynk self_test", DEBUG);
+  strip.begin();
+  self_test(&wclock, 0xFFFFFFFF, 50);
+  setClockDisplay();
+}
+
+BLYNK_WRITE(V3){ //MINUTE_DISPLAY I/O
+  spare_minutes_en = param.asInt();
+  EEPROM.write(E_MEM_SPARE_MIN_EN, spare_minutes_en);
+  setClockDisplay();
+}
+
+BLYNK_WRITE(V4){ //MINUTE_DISPLAY RGB
+  m_red = (uint8_t)param[0].asInt();
+  m_blue = (uint8_t)param[1].asInt();
+  m_green = (uint8_t)param[2].asInt();
+  m_white = 0;
+  if(m_red == 255 && m_green == 255 && m_blue == 255){
+    m_red = 0; m_green = 0; m_blue = 0; m_white = 255;
+  }
+
+  String s = "m_red: " + String(m_red);
+  reportln(s, DEBUG);
+  s = "m_blue: " + String(m_blue);
+  reportln(s, DEBUG);
+  s = "m_green: "  + String(m_green);
+  reportln(s, DEBUG);
+
+
+  #ifdef ESP_EEPROM
+  EEPROM.write(E_MEM_MRED, m_red);
+  EEPROM.write(E_MEM_MGREEN, m_blue);
+  EEPROM.write(E_MEM_MBLUE, m_green);
+  EEPROM.write(E_MEM_MWHITE, m_white);
+  EEPROM.commit();
+  #endif //ESP_EEPROM
+
+  setClockDisplay();
+}
+
+BLYNK_WRITE(V5) { //AUTO_BRIGHTNESS I/O
+  auto_brightness_en = param.asInt();
+}
+
+BLYNK_WRITE(V6){ //MANUAL_BRIGHTNESS VAL
+  if(!auto_brightness_en) {
+    uint8_t temp = param.asInt();
+    if(man_brightness != temp) {
+      man_brightness = temp;
+      wclock.strip->setBrightness(man_brightness);
+      wclock.strip->show(); 
+    }
+  }
+}
+
+#endif //ESP_BLYNK
+
 //this should correct any jitter
 void addsecond(struct tm* currentTime) {
   time_t unixTime = mktime(currentTime);
@@ -67,7 +178,9 @@ void setClockDisplay() {
 
   //color = liminousityCorrection(&wclock, red, green, blue, white);
   color = wclock.strip->Color(red, green, blue, white);
-  displayTime(&timestruct, &wclock, color);
+  uint32 m_color = wclock.strip->Color(m_red,m_blue,m_green,m_white);
+  //color = wclock.strip->Color(65,77,0,0);
+  displayTime(&timestruct, &wclock, color, spare_minutes_en, m_color);
   strip.show();
 }
 
@@ -75,7 +188,7 @@ void setClockDisplay() {
 void timer1_isr(void){
   if(count > TIM_POSTSCALER) //triggers once a sec
   {
-    String s = "Time after increment: " + String(asctime(&timestruct));
+    String s = "Time" + String(asctime(&timestruct));
     reportln(s, DEBUG);
 
     //interval based retrieval of the Time
@@ -106,12 +219,31 @@ void timer1_isr(void){
 
 
 void setup() {
+#ifdef ESP_BLYNK
+  Blynk.begin(blynkApiKey.c_str(), ssid, passwd);
+#endif //ESP_BLYNK
+#ifdef ESP_EEPROM
+  EEPROM.begin(512);
+
+  red = EEPROM.read(E_MEM_RED);
+  green = EEPROM.read(E_MEM_GREEN);
+  blue = EEPROM.read(E_MEM_BLUE);
+  white = EEPROM.read(E_MEM_WHITE);
+
+  m_red = EEPROM.read(E_MEM_MRED);
+  m_blue = EEPROM.read(E_MEM_MGREEN);
+  m_green = EEPROM.read(E_MEM_MBLUE);
+  m_white = EEPROM.read(E_MEM_MWHITE);
+
+  spare_minutes_en = EEPROM.read(E_MEM_SPARE_MIN_EN);
+#endif //ESP_EEPROM
+
   //set the internal LED as output
   pinMode (LED_BUILTIN, OUTPUT);
   digitalWrite(LED_BUILTIN, LOW);
 
   //initialise the serial port
-  Serial.begin(115200);
+  Serial.begin(BAUDRATE);
 
   //initialise the LED strip
   strip.setBrightness(MAX_BRIGHTNESS);
@@ -180,10 +312,23 @@ void setup() {
 }
 
 void loop() {
-  float brightness = analogRead(A0);
-  brightness = map(brightness, 0, 1024, 0, 255); 
-  brightness = pow(brightness, 1/GAMMA) / pow(MAX_BRIGHTNESS, 1/GAMMA);
-  brightness = brightness * MAX_BRIGHTNESS;
-  wclock.strip->setBrightness((uint8_t)map(brightness, 0, 255, 1, 255));
-  wclock.strip->show();
+#ifdef ESP_BLYNK
+  Blynk.run();
+  if(auto_brightness_en) {
+#endif //ESP_BLYNK
+
+    float brightness = analogRead(A0);
+    brightness = map(brightness, 0, 1024, MIN_BRIGHTNESS, MAX_BRIGHTNESS);
+    float v1 = brightness;
+    brightness = pow(brightness, 1/GAMMA) / pow(MAX_BRIGHTNESS, 1/GAMMA);
+    brightness = brightness * MAX_BRIGHTNESS;
+    float v2 = brightness;
+    uint8_t b = map(brightness, 0, MAX_BRIGHTNESS, MIN_BRIGHTNESS, MAX_BRIGHTNESS);
+    uint8_t v3 = b;
+    wclock.strip->setBrightness(b);
+    setClockDisplay();
+    wclock.strip->show(); 
+#ifdef ESP_BLYNK
+  }
+#endif //ESP_BLYNK
 }

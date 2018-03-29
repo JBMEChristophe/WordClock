@@ -101,11 +101,13 @@ void handle_hours(struct tm* t, wordClock* clock, uint32_t color)
   SWC(TEXT_NUMBERS[hours -1], color);
 }
 
-void displayTime(struct tm* t, wordClock* clock, uint32_t color)
+void displayTime(struct tm* t, wordClock* clock, uint32_t color, uint8_t spare_min_en, uint32_t spare_min_color)
 {
   SWC(w_IT, color);
   SWC(w_IS, color);
   handle_minutes(t, clock, color);
-  handle_minutes_spare(t, clock, clock->strip->Color(0,0,255,0));
+  if(spare_min_en){
+    handle_minutes_spare(t, clock, spare_min_color);
+  }
   handle_hours(t, clock, color);
 }
