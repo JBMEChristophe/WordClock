@@ -25,8 +25,12 @@ void showNumber(wordClock* clock, uint8_t numberToDisplay, uint8_t wordHeight, u
 	}
 }
 
-void displayTemperature(wordClock* clock, float temperature, uint32_t color) {
+uint8_t displayTemperature(wordClock* clock, float temperature, uint32_t color) {
 	uint8_t* temp = cutTemp(temperature);
+
+	if(temp = NULL){
+		return 1;
+	}
 	//draw a minus symbol above the numbers
 	if(temperature < 0)	{
 		SWC(((clockFace){0,10,5}), color);
@@ -36,4 +40,5 @@ void displayTemperature(wordClock* clock, float temperature, uint32_t color) {
 	 	showNumber(clock, temp[0], 8, -4, color);
 	}
 	showNumber (clock, temp[1], 8, 2, color);
+	return 0;
 }

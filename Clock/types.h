@@ -20,6 +20,14 @@ typedef struct wordClock {
 	Adafruit_NeoPixel* strip;
 } wordClock;
 
+typedef struct clockFaceColor{
+	uint8_t r;
+	uint8_t g;
+	uint8_t b;
+	uint8_t w;
+	uint32_t c;
+} clockFaceColor;
+
 typedef struct clockFace{
     uint8_t y;
     uint8_t x;

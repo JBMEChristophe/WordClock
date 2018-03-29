@@ -57,6 +57,10 @@
 #define B_MCD_L 200
 #define B_MCD_H 400
 
+#define TIME 0
+#define MINUTES 1
+#define TEMPERATURE 2
+
 //reporting is defined by levels 1 upto 5 with 5 reporting everything
 //when putting 0 in the reporting level nothing will be printed
 #define REPORTING_LEVEL 5
