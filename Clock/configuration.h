@@ -1,17 +1,25 @@
 #ifndef CONFIGURATION_H
 #define CONFIGURATION_H
 
+#include "EEPROM_mem_location.h"
+
 #define L_SSID "Guest"
 #define L_PASSW "gastennetwerk"
 
+#define ESP_BLYNK //comment out to disable feature
+#define ESP_EEPROM // comment out to disable feature
+
 #define TIMEZONE 1
-#define DAYLIGHTSAVING 0
+#define DAYLIGHTSAVING 1
+
+#define BAUDRATE 115200
 
 #define PIN D3
 #define NUM_LEDS 110
 #define ROWS 10
 #define COLUMNS 11
 #define MAX_BRIGHTNESS 255
+#define MIN_BRIGHTNESS 3
 
 #define TIM_POSTSCALER 200
 #define TIM_PRESCALER 256
@@ -25,6 +33,8 @@
 #define CONNECTIONATTEMPTS 60			  //try connecting for 30 secs
 
 #define SECOND_INTERVAL_MS 1000
+
+#define LDR_SAMPLES 10000
 
 #define T_DISPLAY1 10
 #define T_DISPLAY2 40
