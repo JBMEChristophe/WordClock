@@ -7,7 +7,7 @@ uint8_t ntp_init(float timezone_hours, float daylightOffset_hours) {
 		return 1;
 	}
 	noInterrupts();
-	configTime(timezone_hours*3600, daylightOffset_hours, NTP_SERVER_1, NTP_SERVER_2);
+	configTime(timezone_hours*3600, daylightOffset_hours*3600, NTP_SERVER_1, NTP_SERVER_2);
 	while(!time(nullptr)) {
 	}
 	interrupts();
