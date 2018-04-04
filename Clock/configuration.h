@@ -6,11 +6,14 @@
 #define L_SSID "Guest"
 #define L_PASSW "gastennetwerk"
 
-#define ESP_BLYNK //comment out to disable feature
-#define ESP_EEPROM // comment out to disable feature
+//#define ESP_BLYNK //comment out to disable feature
+//#define ESP_EEPROM // comment out to disable feature
+
+//#define SELFTEST_ON_STARTUP
 
 #define TIMEZONE 1
 #define DAYLIGHTSAVING 1
+
 
 #define BAUDRATE 115200
 
@@ -32,10 +35,6 @@
 #define TEMP_RETRIEVAL_INTERVAL_MS TEMP_RETRIEVAL_INTERVAL_M*1000*60
 #define CONNECTIONATTEMPTS 60			  //try connecting for 30 secs
 
-#define SECOND_INTERVAL_MS 1000
-
-#define LDR_SAMPLES 10000
-
 #define T_DISPLAY1 10
 #define T_DISPLAY2 40
 
@@ -43,9 +42,6 @@
 
 #define NTP_SERVER_1 "nl.pool.ntp.org"
 #define NTP_SERVER_2 "europe.pool.ntp.org"
-
-#define PING_DELAY_MS 500
-#define PING_COUNT 2
 
 //LED gamma correction
 #define GAMMA 0.17
@@ -61,6 +57,8 @@
 #define MINUTES 1
 #define TEMPERATURE 2
 
+#define DEFAULT_DISPLAY_STATE 0
+
 //reporting is defined by levels 1 upto 5 with 5 reporting everything
 //when putting 0 in the reporting level nothing will be printed
 #define REPORTING_LEVEL 5
@@ -70,6 +68,8 @@
 #define WARN 3
 #define ERROR 2
 #define FATAL 1
+
+
 
 void reportln(String s, int severity) {
 	if(severity <= REPORTING_LEVEL) {
