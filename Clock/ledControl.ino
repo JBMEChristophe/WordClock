@@ -28,18 +28,26 @@ void self_test(wordClock* clock, uint32_t color, int ms) {
 
 void setPixelRange(wordClock* clock, int x, int y, byte pixels, uint32_t color)
 {
-	Serial.print("pixels: ");
-	Serial.println(pixels, BIN);
-	for (int i = sizeof(pixels)*8; i > 0; --i) {
+	for (int i = 3; i <= 7; i++) {
+
+    //this may seem like magic
+    //5 is the width of the letter
+    //x is of offset accross the screen
+    //3 is offset caused by the matrix
+    //1 is a correction because arrays
+    int pixelLoc = 5+x-i+3-1;
 		if(pixels & (1 << i)) {
 			//this is working
-			clock->strip->setPixelColor(clock->grid[y][x-i], color);
+			clock->strip->setPixelColor(clock->grid[y][pixelLoc], color);
+      Serial.print(1);
 		}
 		else {
 			//turn the other LEDs, in the range, off
-			clock->strip->setPixelColor(clock->grid[y][x-i], 0x00000000);
+			clock->strip->setPixelColor(clock->grid[y][pixelLoc], 0x00000000);
+      Serial.print(0);
 		}
 	}
+  Serial.println();
 }
 
 //sets a word defined in words.h

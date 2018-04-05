@@ -8,6 +8,11 @@
 
 #define ESP_BLYNK //comment out to disable feature
 #define ESP_EEPROM // comment out to disable feature
+//#define SECOND_BLINKING_INTERNAL_LED
+//#define SELFTEST_ON_STARTUP
+#define TIME_DISPLAY
+//#define TEMPERATURE_DISPLAY
+#define WIFI_NOT_CONNECT_LED
 
 #define TIMEZONE 1
 #define DAYLIGHTSAVING 1
@@ -19,33 +24,25 @@
 #define ROWS 10
 #define COLUMNS 11
 #define MAX_BRIGHTNESS 255
-#define MIN_BRIGHTNESS 3
+#define MIN_BRIGHTNESS 1
 
-#define TIM_POSTSCALER 200
-#define TIM_PRESCALER 256
-
-#define NONBLOCKING_DELAY_S 5
+#define T1M_POSTSCALER 200
+#define T1M_PRESCALER 256
 
 #define TIME_RETRIEVAL_INTERVAL_M  15		
 #define TEMP_RETRIEVAL_INTERVAL_M  15				
-#define TIME_RETRIEVAL_INTERVAL_MS TIME_RETRIEVAL_INTERVAL_M*1000*60
-#define TEMP_RETRIEVAL_INTERVAL_MS TEMP_RETRIEVAL_INTERVAL_M*1000*60
 #define CONNECTIONATTEMPTS 60			  //try connecting for 30 secs
 
-#define SECOND_INTERVAL_MS 1000
+#define T_DISPLAY1_START 10
+#define T_DISPLAY1_END T_DISPLAY1_START + T_DISPLAY_DUR
 
-#define LDR_SAMPLES 10000
-
-#define T_DISPLAY1 10
-#define T_DISPLAY2 40
+#define T_DISPLAY2_START 40
+#define T_DISPLAY2_END T_DISPLAY2_START + T_DISPLAY_DUR
 
 #define T_DISPLAY_DUR 5
 
 #define NTP_SERVER_1 "nl.pool.ntp.org"
 #define NTP_SERVER_2 "europe.pool.ntp.org"
-
-#define PING_DELAY_MS 500
-#define PING_COUNT 2
 
 //LED gamma correction
 #define GAMMA 0.17
@@ -56,6 +53,8 @@
 #define G_MCD_H 1400
 #define B_MCD_L 200
 #define B_MCD_H 400
+
+#define KELVIN 273.15
 
 #define TIME 0
 #define MINUTES 1

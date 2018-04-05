@@ -26,8 +26,8 @@ float extractTemperature(String jsonHTTPreponse) {
   return main["temp"];
 }
 
-String getTemperature(WifiLocation* location, String weatherAppKey) {
-  location_t loc = location->getGeoFromWiFi();
+String getTemperature(location_t loc, String weatherAppKey) {
+  //location_t loc = location->getGeoFromWiFi();
   String request = builtOWMrequest(loc.lat, loc.lon, weatherAppKey);
   String payload = "";
   HTTPClient http;  //Declare an object of class HTTPClient

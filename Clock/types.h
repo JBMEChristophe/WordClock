@@ -34,4 +34,9 @@ typedef struct clockFace{
     uint8_t len;
 } clockFace;
 
+typedef enum display_state{
+	Time,
+	Temperature
+} display_state;
+
 #endif //TYPES_H

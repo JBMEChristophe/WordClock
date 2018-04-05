@@ -27,6 +27,9 @@ const String owmApiKey = "d816a08dddeb2df937174ddcd3d4b5a3";
 const String blynkApiKey = "741a7e8900c04fd8ada0297a956b1c77";
 WifiLocation location(googleApiKey);
 
+display_state prevDisplayState;
+display_state displayState = Time;
+
 const char ssid[] = L_SSID;
 const char passwd[] = L_PASSW;
 
@@ -39,6 +42,7 @@ clockFaceColor color[] = {
 uint8_t auto_brightness_en;
 uint8_t man_brightness;
 uint8_t spare_minutes_en = 1;
+uint8_t temperature_display_en = 1;
 
 byte neopixel_grid[ROWS][COLUMNS] = {
  { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 },
@@ -56,116 +60,17 @@ byte neopixel_grid[ROWS][COLUMNS] = {
 wordClock wclock;
 struct tm timestruct = { 0 };
 struct tm prevTime   = { 0 };
-u8 firstTimerecv = 0;
 float temperature;
+location_t loc;
 
+uint8_t displayUpdate = 1;
 
 uint8_t rtnval;
 uint8_t* rtnptr;
-uint8_t connectionAttempts;
 
-uint32_t elapsed_time_s[3] = { 0 };
-uint8_t reportOnce = 0;
+uint32_t elapsed_time_s = 999999;
 int count = 0;
-
-#ifdef ESP_BLYNK
-
-BLYNK_WRITE(V0){ //zeRGBa control
-  color[TIME].r = param[0].asInt();
-  color[TIME].g = param[1].asInt();
-  color[TIME].b = param[2].asInt();
-  color[TIME].w = 0;
-
-  if(color[TIME].r == 255 && color[TIME].g == 255 && color[TIME].b == 255){
-    color[TIME].r = 0;
-    color[TIME].g = 0;
-    color[TIME].b = 0;
-    color[TIME].w = 255;
-  }
-
-  String s = "color[TIME].r: " + String(color[TIME].r);
-  reportln(s, DEBUG);
-  s = "green: "  + String(color[TIME].g);
-  reportln(s, DEBUG);
-  s = "blue: " + String(color[TIME].b);
-  reportln(s, DEBUG);
-
-  #ifdef ESP_EEPROM
-  EEPROM.write(E_MEM_RED,   color[TIME].r);
-  EEPROM.write(E_MEM_GREEN, color[TIME].g);
-  EEPROM.write(E_MEM_BLUE,  color[TIME].b);
-  EEPROM.write(E_MEM_WHITE, color[TIME].w);
-  EEPROM.commit();
-  #endif //ESP_EEPROM
-
-  setClockDisplay();
-}
-
-BLYNK_WRITE(V1){ //TEMPERATURE_DISPLAY
-
-}
-
-BLYNK_WRITE(V2){ //SELF_TEST
-  reportln("Blynk self_test", DEBUG);
-  strip.begin();
-  self_test(&wclock, 0xFFFFFFFF, 50);
-  setClockDisplay();
-}
-
-BLYNK_WRITE(V3){ //MINUTE_DISPLAY I/O
-  spare_minutes_en = param.asInt();
-  EEPROM.write(E_MEM_SPARE_MIN_EN, spare_minutes_en);
-  setClockDisplay();
-}
-
-BLYNK_WRITE(V4){ //MINUTE_DISPLAY RGB
-  color[MINUTES].r = (uint8_t)param[0].asInt();
-  color[MINUTES].g = (uint8_t)param[1].asInt();
-  color[MINUTES].b = (uint8_t)param[2].asInt();
-  color[MINUTES].w = 0;
-
-  if(color[MINUTES].r == 255 && color[MINUTES].g == 255 && color[MINUTES].b == 255){
-    color[MINUTES].r = 0;
-    color[MINUTES].g = 0;
-    color[MINUTES].b = 0;
-    color[MINUTES].w = 255;
-  }
-
-  String s = "m_red: " + String(color[MINUTES].r);
-  reportln(s, DEBUG);
-  s = "m_green: " + String(color[MINUTES].g);
-  reportln(s, DEBUG);
-  s = "m_blue: " + String(color[MINUTES].b);
-  reportln(s, DEBUG);
-
-
-  #ifdef ESP_EEPROM
-  EEPROM.write(E_MEM_MRED,    color[MINUTES].r);
-  EEPROM.write(E_MEM_MGREEN,  color[MINUTES].g);
-  EEPROM.write(E_MEM_MBLUE,   color[MINUTES].b);
-  EEPROM.write(E_MEM_MWHITE,  color[MINUTES].w);
-  EEPROM.commit();
-  #endif //ESP_EEPROM
-
-  setClockDisplay();
-}
-
-BLYNK_WRITE(V5) { //AUTO_BRIGHTNESS I/O
-  auto_brightness_en = param.asInt();
-}
-
-BLYNK_WRITE(V6){ //MANUAL_BRIGHTNESS VAL
-  if(!auto_brightness_en) {
-    uint8_t temp = param.asInt();
-    if(man_brightness != temp) {
-      man_brightness = temp;
-      wclock.strip->setBrightness(man_brightness);
-      wclock.strip->show(); 
-    }
-  }
-}
-
-#endif //ESP_BLYNK
+String s;
 
 //this should correct any jitter
 void addsecond(struct tm* currentTime) {
@@ -175,6 +80,7 @@ void addsecond(struct tm* currentTime) {
 }
 
 void setClockDisplay() {
+  #ifdef TIME_DISPLAY
   reportln("updating clockface", DEBUG);
   wclock.strip->clear();
 
@@ -190,53 +96,104 @@ void setClockDisplay() {
 
   displayTime(&timestruct, &wclock, color[TIME].c, spare_minutes_en, color[MINUTES].c);
   strip.show();
+  #endif //TIME_DISPLAY
 }
-/*
+
 void setTemperatureDisplay() {
-  reportln("displaying temperature", DEBUG);
-  wclock->strip->clear();
-  color[TEMPERATURE].c = 
+  #ifdef TEMPERATURE_DISPLAY
+  reportln("showing temperature", DEBUG);
+
+  color[TEMPERATURE].c = wclock.strip->Color( color[TEMPERATURE].r, 
+                                        color[TEMPERATURE].g,
+                                        color[TEMPERATURE].b,
+                                        color[TEMPERATURE].w );
+  reportln("updating color", DEBUG);
+  rtnval = displayTemperature(&wclock, temperature, color[TEMPERATURE].c);
+  reportln("updating temperature display", DEBUG);
+  if(rtnval != 0) {
+    reportln("error encountered displaying temperature", ERROR);
+  }
+  strip.show();
+  #endif //TEMPERATURE_DISPLAY
 }
-*/
+
+void updateDisplay(display_state ds){
+  wclock.strip->clear();
+  switch (ds){
+    case Time:
+      #ifdef TIME_DISPLAY
+      setClockDisplay();
+      #endif //TIME_DISPLAY
+      break;
+    case Temperature:
+      #ifdef TEMPERATURE_DISPLAY
+      setTemperatureDisplay();
+      #endif //TEMPERATURE_DISPLAY
+      break;
+    default:
+      reportln("updateDisplay received an invalid call", DEBUG);
+      break;
+  }
+}
 
 //is triggered at 200hz
 void timer1_isr(void){
-  if(count > TIM_POSTSCALER) //triggers once a sec
+  if(count++ > T1M_POSTSCALER) //triggers once a sec
   {
-    String s = "Time" + String(asctime(&timestruct));
+    #ifdef SECOND_BLINKING_INTERNAL_LED
+    digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
+    #endif //SECOND_BLINKING_INTERNAL_LED
+
+    s = "Time: " + String(asctime(&timestruct));
     reportln(s, DEBUG);
 
     //interval based retrieval of the Time
-    if(elapsed_time_s[0]++ > TIME_RETRIEVAL_INTERVAL_M * 60 || !firstTimerecv) {
+    if(elapsed_time_s++ > TIME_RETRIEVAL_INTERVAL_M * 60) {
       reportln("Retrieving time from using NTP", INFO);
       rtnval = ntp_getTime(&timestruct);
       if(rtnval != 0) {
         reportln("Could not sync time with the NTS", WARN);
       }
-      elapsed_time_s[0] = 0;
-      setClockDisplay();
-      firstTimerecv = 1;
+/*
+      reportln("Retrieving temperature from OpenWeatherMap", INFO);
+      String temperatureRespons = getTemperature(loc, owmApiKey);
+      temperature = extractTemperature(temperatureRespons);
+      temperature = temperature - KELVIN;
+      s = "temperature from OWM: "  +  String(temperature);
+      reportln(s, DEBUG);
+*/
+      elapsed_time_s = 0;
+      displayUpdate = true;
     }
 
-    digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
     prevTime = timestruct;
     addsecond(&timestruct);
-
     if(prevTime.tm_sec == 59 && timestruct.tm_sec == 00) {
-        reportln("A minute has passed", DEBUG);
-        setClockDisplay();
+      reportln("A minute has passed", DEBUG);
+      displayUpdate = true;
+
     }
 
-    if(timestruct.tm_sec > T_DISPLAY1 && timestruct.tm_sec < T_DISPLAY1 + T_DISPLAY_DUR){
-      
+    if(timestruct.tm_sec >= T_DISPLAY1_START  && timestruct.tm_sec < T_DISPLAY1_END){
+      displayState = Temperature;
+    }
+    else if(timestruct.tm_sec >= T_DISPLAY2_START  && timestruct.tm_sec < T_DISPLAY2_END){
+      displayState = Temperature;
+    }
+    else{
+      displayState = Time;
+    }
+
+    if(displayUpdate == true || prevDisplayState != displayState){
+      displayUpdate = false;
+      prevDisplayState = displayState;
+
+      reportln("updating display", DEBUG);
+      updateDisplay(displayState);
     }
     count = 0;
   }
-  else {
-    count++;
-  }
 }
-
 
 void setup() {
   #ifdef ESP_BLYNK
@@ -260,7 +217,7 @@ void setup() {
 
   //set the internal LED as output
   pinMode (LED_BUILTIN, OUTPUT);
-  digitalWrite(LED_BUILTIN, LOW);
+  digitalWrite(LED_BUILTIN, HIGH);
 
   //initialise the serial port
   Serial.begin(BAUDRATE);
@@ -275,39 +232,58 @@ void setup() {
   wclock.columns = COLUMNS;
   wclock.strip = &strip;
   rtnptr = (byte*)memcpy(wclock.grid, neopixel_grid, sizeof(neopixel_grid[0][0])*COLUMNS*ROWS);
-  if(rtnptr == NULL){ reportln("system out of memory!", FATAL); }
-
+  if(rtnptr == NULL){
+    reportln("system out of memory!", FATAL);
+  }
+  #ifdef SELFTEST_ON_STARTUP
   //perform a self to check whether all the LEDS are working.
   reportln("--------------PERFORMING SELFTEST---------------", INFO);
   self_test(&wclock, 0xFFFFFFFF, 50); 
   reportln("--------------FINISHING SELFTEST----------------", INFO);
-
   delay(1000);
+  #endif //SELFTEST_ON_STARTUP
 
   //attempt to connect to WiFi
-  connectionAttempts = 0;
+  uint8_t connectionAttempts = 0;
+  uint8_t reportOnce = 0;
   reportln("--------------connecting to WiFI:---------------", INFO);
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, passwd);
   delay(500);
   while (WiFi.status() != WL_CONNECTED) {
-      connectionAttempts++;
       Serial.print(".");
       delay(500);
-      if(connectionAttempts > CONNECTIONATTEMPTS)
+      if(connectionAttempts++ > CONNECTIONATTEMPTS)
       {
+        #ifdef WIFI_NOT_CONNECT_LED
         wclock.strip->setPixelColor(0, wclock.strip->Color(255,0,0,0));
+        #endif //WIFI_NOT_CONNECT_LED
         if(!reportOnce){
           reportln("The device could not connect to the provided SSID", WARN);
           reportOnce = true;
           strip.show();
         }
-      }
+     }
   }
-  String s = "-----------Connection established--------------";
-  reportln(s, INFO);
+
+  reportln("--------------Retrieving location---------------", INFO);
+  location_t loc = location.getGeoFromWiFi();
+  s = "Lattitude received: " + String(loc.lat);
+  reportln(s, DEBUG);
+  s = "Longitude received: " + String(loc.lon);
+  reportln(s, DEBUG);
+  
+
+  reportln("------------Retrieving weather data-------------", INFO);
+  String temperatureRespons = getTemperature(loc, owmApiKey);
+  temperature = extractTemperature(temperatureRespons);
+  temperature = temperature - KELVIN;
+  s = "Temperature: " + String(temperature) + " Degrees celsius";
+  reportln(s, DEBUG);
+
+  reportln("------------Connection established--------------", INFO);
   s = "IP-Address: " + WiFi.localIP().toString();
-  reportln(s, INFO);
+  reportln(s, DEBUG);
 
   //intialise the time server
   reportln("--------------connecting to NTP-----------------", INFO);
@@ -321,12 +297,7 @@ void setup() {
   timer1_isr_init();
   timer1_enable(TIM_DIV265, TIM_EDGE, TIM_LOOP);
   timer1_attachInterrupt(timer1_isr);
-  timer1_write(F_CPU/TIM_PRESCALER/TIM_POSTSCALER); // 1/200 sec
-  
-  if(rtnval != 0 || rtnptr == NULL){
-    reportln("An error was encountered: Halting", ERROR);
-    while(1){}
-  }
+  timer1_write(F_CPU/T1M_PRESCALER/T1M_POSTSCALER); // 1/200 sec
 
   reportln("--------------STARTING CLOCK--------------------", INFO);
   interrupts(); //starting the interrupt after all initialisation is done
@@ -342,7 +313,7 @@ void loop() {
     brightness = pow(brightness, 1/GAMMA) / pow(MAX_BRIGHTNESS, 1/GAMMA);
     brightness = brightness * MAX_BRIGHTNESS;
     wclock.strip->setBrightness(map(brightness, 0, MAX_BRIGHTNESS, MIN_BRIGHTNESS, MAX_BRIGHTNESS));
-    setClockDisplay();
+    updateDisplay(displayState);
     wclock.strip->show(); 
   #ifdef ESP_BLYNK
   }
